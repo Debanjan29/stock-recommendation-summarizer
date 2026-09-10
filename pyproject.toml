@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stock-extractor"
+version = "1.0.0"
+description = "Extract structured stock recommendations (ticker, action, stop-loss, target, horizon, quote, timestamp) from YouTube videos."
+readme = "README.md"
+authors = [{ name = "Antigravity AI" }]
+license = { text = "MIT" }
+requires-python = ">=3.8"
+dependencies = [
+    "youtube-transcript-api>=0.6.0",
+    "rich>=12.0.0",
+    "typer>=0.9.0",
+    "requests>=2.25.0",
+    "deep-translator>=1.11.0"
+]
+
+[project.scripts]
+stock-yt = "stock_extractor.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
