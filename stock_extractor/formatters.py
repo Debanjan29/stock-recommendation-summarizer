@@ -13,14 +13,17 @@ from rich.panel import Panel
 from rich.text import Text
 
 from stock_extractor.models import VideoReport
+from stock_extractor.transliteration import ensure_no_pure_hindi
 
 console = Console(width=max(shutil.get_terminal_size((135, 24)).columns, 135))
 
 def render_console_report(report: VideoReport) -> None:
     """Render a beautiful colored report in the terminal using Rich."""
+    safe_title = ensure_no_pure_hindi(report.title)
+    safe_channel = ensure_no_pure_hindi(report.channel)
     panel_text = (
-        f"[bold blue]Title:[/bold blue] {report.title}\n"
-        f"[bold blue]Channel:[/bold blue] {report.channel}\n"
+        f"[bold blue]Title:[/bold blue] {safe_title}\n"
+        f"[bold blue]Channel:[/bold blue] {safe_channel}\n"
         f"[bold blue]URL:[/bold blue] {report.video_url}\n"
         f"[bold blue]Method:[/bold blue] {report.extraction_method}\n"
         f"[bold blue]Recommendations Found:[/bold blue] [bold green]{len(report.recommendations)}[/bold green]"
@@ -55,16 +58,17 @@ def render_console_report(report: VideoReport) -> None:
             action_style = f"[cyan]{rec.action}[/cyan]"
             
         timestamp_display = f"[link={rec.timestamp_url}]{rec.timestamp_formatted}[/link]" if rec.timestamp_url else rec.timestamp_formatted
+        safe_quote = ensure_no_pure_hindi(rec.source_quote)
         
         table.add_row(
-            rec.ticker,
+            ensure_no_pure_hindi(rec.ticker),
             action_style,
-            rec.analyst,
-            rec.stop_loss,
-            rec.target,
-            rec.horizon,
+            ensure_no_pure_hindi(rec.analyst),
+            ensure_no_pure_hindi(rec.stop_loss),
+            ensure_no_pure_hindi(rec.target),
+            ensure_no_pure_hindi(rec.horizon),
             timestamp_display,
-            rec.source_quote
+            safe_quote
         )
         
     console.print(table)
@@ -72,11 +76,13 @@ def render_console_report(report: VideoReport) -> None:
 
 def format_markdown_report(report: VideoReport) -> str:
     """Format report as GitHub-Flavored Markdown."""
+    safe_title = ensure_no_pure_hindi(report.title)
+    safe_channel = ensure_no_pure_hindi(report.channel)
     lines = [
         f"# Stock Recommendations Report",
         f"",
-        f"- **Video Title:** [{report.title}]({report.video_url})",
-        f"- **Channel:** {report.channel}",
+        f"- **Video Title:** [{safe_title}]({report.video_url})",
+        f"- **Channel:** {safe_channel}",
         f"- **Extraction Engine:** {report.extraction_method}",
         f"- **Total Recommendations:** {len(report.recommendations)}",
         f"- **Generated At:** {report.timestamp_generated}",
@@ -89,8 +95,9 @@ def format_markdown_report(report: VideoReport) -> str:
     
     for rec in report.recommendations:
         ts_link = f"[{rec.timestamp_formatted}]({rec.timestamp_url})" if rec.timestamp_url else rec.timestamp_formatted
-        quote_clean = rec.source_quote.replace("|", "\\|").replace("\n", " ")
-        lines.append(f"| **{rec.ticker}** | `{rec.action}` | {rec.analyst} | {rec.stop_loss} | {rec.target} | {rec.horizon} | {ts_link} | {quote_clean} |")
+        safe_quote = ensure_no_pure_hindi(rec.source_quote)
+        quote_clean = safe_quote.replace("|", "\\|").replace("\n", " ")
+        lines.append(f"| **{ensure_no_pure_hindi(rec.ticker)}** | `{rec.action}` | {ensure_no_pure_hindi(rec.analyst)} | {ensure_no_pure_hindi(rec.stop_loss)} | {ensure_no_pure_hindi(rec.target)} | {ensure_no_pure_hindi(rec.horizon)} | {ts_link} | {quote_clean} |")
         
     lines.append("")
     lines.append("## Detailed Breakdown")
@@ -98,14 +105,15 @@ def format_markdown_report(report: VideoReport) -> str:
     
     for idx, rec in enumerate(report.recommendations, 1):
         ts_link = f"[{rec.timestamp_formatted}]({rec.timestamp_url})" if rec.timestamp_url else rec.timestamp_formatted
-        lines.append(f"### {idx}. {rec.ticker} - `{rec.action}`")
-        lines.append(f"- **Analyst / Firm:** {rec.analyst}")
-        lines.append(f"- **Stop-Loss:** {rec.stop_loss}")
-        lines.append(f"- **Target Price:** {rec.target}")
-        lines.append(f"- **Horizon:** {rec.horizon}")
+        safe_quote = ensure_no_pure_hindi(rec.source_quote)
+        lines.append(f"### {idx}. {ensure_no_pure_hindi(rec.ticker)} - `{rec.action}`")
+        lines.append(f"- **Analyst / Firm:** {ensure_no_pure_hindi(rec.analyst)}")
+        lines.append(f"- **Stop-Loss:** {ensure_no_pure_hindi(rec.stop_loss)}")
+        lines.append(f"- **Target Price:** {ensure_no_pure_hindi(rec.target)}")
+        lines.append(f"- **Horizon:** {ensure_no_pure_hindi(rec.horizon)}")
         lines.append(f"- **Timestamp:** {ts_link}")
         lines.append(f"- **Context Quote:**")
-        lines.append(f"> \"{rec.source_quote}\"")
+        lines.append(f"> \"{safe_quote}\"")
         lines.append("")
         
     return "\n".join(lines)

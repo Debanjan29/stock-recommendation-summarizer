@@ -9,11 +9,20 @@ from stock_extractor.models import StockRecommendation
 from stock_extractor.extractors.base import BaseExtractor
 from stock_extractor.utils import format_timestamp, make_timestamp_url
 from stock_extractor.indian_market import indian_market_manager
+from stock_extractor.transliteration import ensure_no_pure_hindi
 
 EXTRACTION_SYSTEM_PROMPT = """You are an expert Indian financial market analyst assistant.
 Your task is to analyze YouTube video transcript snippets and extract EVERY stock recommendation or financial analysis mentioned ONLY for Indian Stock Market (NSE / BSE equities and Indian Indices like NIFTY 50, BANKNIFTY, SENSEX, RELIANCE, TATAMOTORS, HDFCBANK, SBIN, ZOMATO, etc.).
 
-STRICT REQUIREMENT: Focus ONLY on Indian stock market stocks and indices. Do NOT include foreign/US stocks.
+STRICT REQUIREMENT 1: Focus ONLY on Indian stock market stocks and indices. Do NOT include foreign/US stocks.
+
+CRITICAL LANGUAGE REQUIREMENT (NO PURE HINDI / NO DEVANAGARI SCRIPT):
+- NO PURE HINDI IN DEVANAGARI SCRIPT: Under NO circumstance should any output or report field (source_quote, analyst, horizon, rationale, etc.) be in pure Devanagari Hindi (e.g., no हिंदी script).
+- Allowed languages:
+  1. English (e.g., clear English translation or summary).
+  2. Hinglish (Hindi spoken in Roman/English alphabet, e.g. "So far 7:30 baje tak SGX Nifty 0.50% down tha. Large cap mein HDFC Bank aur Reliance safe lag rahe hain").
+  3. Both English and Hinglish (e.g., "Hinglish quote / English translation").
+- If the speaker spoke in Hindi in the video, transcribe it into Hinglish (Roman English letters) or translate it into English, or both. NEVER output pure Hindi in Devanagari script.
 
 For each Indian stock mentioned, extract:
 - ticker: Official NSE/BSE stock ticker symbol or index name (e.g., RELIANCE, TATAMOTORS, HDFCBANK, SBIN, NIFTY 50, SENSEX).
@@ -22,7 +31,7 @@ For each Indian stock mentioned, extract:
 - stop_loss: Stop-loss level or price in INR/Rs/₹ if mentioned (e.g., "Rs 1420", "1400", "5% below entry"), otherwise "N/A".
 - target: Target price or range in INR/Rs/₹ (e.g., "Rs 1800", "1800-1850", "+25%"), otherwise "N/A".
 - horizon: Time horizon for the trade/investment (e.g., "Short-term (1-2 weeks)", "Long-term (1-3 yrs)", "Intraday"), otherwise "N/A".
-- source_quote: Direct source quote or verbatim context sentence spoken in the video.
+- source_quote: Direct source quote or verbatim context sentence spoken in the video in English, Hinglish (Roman alphabet), or bilingual English+Hinglish. NEVER in Devanagari Hindi.
 - timestamp_seconds: Approximate start timestamp in seconds from the snippet.
 
 Return ONLY a valid JSON array of objects. Do not include markdown formatting or extra commentary.
@@ -61,6 +70,25 @@ def parse_llm_json_response(
 
     try:
         data = json.loads(cleaned)
+    except Exception:
+        data = None
+        # Try extracting from ```json ... ``` codeblock
+        m = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', raw_response)
+        if m:
+            try:
+                data = json.loads(m.group(1).strip())
+            except Exception:
+                pass
+        # Try extracting JSON array [ ... ] directly
+        if data is None:
+            m = re.search(r'(\[\s*\{[\s\S]*\}\s*\])', raw_response)
+            if m:
+                try:
+                    data = json.loads(m.group(1).strip())
+                except Exception:
+                    pass
+
+    try:
         if isinstance(data, dict) and "recommendations" in data:
             data = data["recommendations"]
             
@@ -86,13 +114,13 @@ def parse_llm_json_response(
                 analyst = "N/A" if not raw_analyst or raw_analyst.upper() in ["NONE", "NULL", ""] else raw_analyst
                 
                 rec = StockRecommendation(
-                    ticker=ticker,
-                    action=action,
-                    analyst=analyst,
-                    stop_loss=str(item.get("stop_loss", "N/A")).strip(),
-                    target=str(item.get("target", "N/A")).strip(),
-                    horizon=str(item.get("horizon", "N/A")).strip(),
-                    source_quote=str(item.get("source_quote", "")).strip(),
+                    ticker=ensure_no_pure_hindi(ticker),
+                    action=ensure_no_pure_hindi(action),
+                    analyst=ensure_no_pure_hindi(analyst),
+                    stop_loss=ensure_no_pure_hindi(str(item.get("stop_loss", "N/A")).strip()),
+                    target=ensure_no_pure_hindi(str(item.get("target", "N/A")).strip()),
+                    horizon=ensure_no_pure_hindi(str(item.get("horizon", "N/A")).strip()),
+                    source_quote=ensure_no_pure_hindi(str(item.get("source_quote", "")).strip()),
                     timestamp_seconds=t_sec,
                     timestamp_formatted=format_timestamp(t_sec),
                     timestamp_url=make_timestamp_url(video_id, t_sec)
@@ -228,13 +256,13 @@ def parse_llm_markdown_table_response(
             seen_tickers.add(ticker)
 
             rec = StockRecommendation(
-                ticker=ticker,
-                action=action,
-                analyst=analyst,
-                stop_loss=stop_loss,
-                target=target,
-                horizon=horizon,
-                source_quote=quote[:250],
+                ticker=ensure_no_pure_hindi(ticker),
+                action=ensure_no_pure_hindi(action),
+                analyst=ensure_no_pure_hindi(analyst),
+                stop_loss=ensure_no_pure_hindi(stop_loss),
+                target=ensure_no_pure_hindi(target),
+                horizon=ensure_no_pure_hindi(horizon),
+                source_quote=ensure_no_pure_hindi(quote[:250]),
                 timestamp_seconds=ts_sec,
                 timestamp_formatted=format_timestamp(ts_sec),
                 timestamp_url=make_timestamp_url(video_id, ts_sec)

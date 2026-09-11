@@ -15,6 +15,7 @@ from stock_extractor.transcript_saver import fetch_and_save_translated_transcrip
 from stock_extractor.utils import parse_youtube_id, chunk_transcript
 from stock_extractor.extractors import get_extractor
 from stock_extractor.models import VideoReport
+from stock_extractor.transliteration import ensure_no_pure_hindi
 from stock_extractor import formatters
 
 def sanitize_filename(name: str) -> str:
@@ -70,7 +71,7 @@ def run_pipeline(
     # ---------------------------------------------------------
     # STAGE 2: Analyze Transcript & Save Final Report
     # ---------------------------------------------------------
-    chunks = chunk_transcript(snippets, max_duration=60.0, max_words=300)
+    chunks = chunk_transcript(snippets, max_duration=60.0, max_words=500)
 
     # Get Extractor Engine
     extractor = get_extractor(method=method, api_key=api_key, model=model, ollama_url=ollama_url)
@@ -78,12 +79,15 @@ def run_pipeline(
     # Perform analysis
     recommendations = extractor.extract(chunks, video_id)
 
-    # Build VideoReport Object
+    # Build VideoReport Object with Hindi script sanitization (English / Hinglish)
+    clean_report_title = ensure_no_pure_hindi(metadata.get("title", f"YouTube Video ({video_id})"))
+    clean_channel = ensure_no_pure_hindi(metadata.get("channel", "Unknown Channel"))
+
     report = VideoReport(
         video_id=video_id,
         video_url=metadata.get("video_url", f"https://www.youtube.com/watch?v={video_id}"),
-        title=metadata.get("title", f"YouTube Video ({video_id})"),
-        channel=metadata.get("channel", "Unknown Channel"),
+        title=clean_report_title,
+        channel=clean_channel,
         thumbnail_url=metadata.get("thumbnail_url", ""),
         extraction_method=extractor.name,
         recommendations=recommendations
@@ -91,10 +95,10 @@ def run_pipeline(
 
     # ---------------------------------------------------------
     # Report File Naming: 'DD-MM-YY - Video Caption.<ext>'
-    # Overwrites on rerun
+    # Overwrites on rerun (ensuring no pure Hindi in filename)
     # ---------------------------------------------------------
     today_str = datetime.now().strftime("%d-%m-%y")
-    clean_title = sanitize_filename(report.title)
+    clean_title = sanitize_filename(clean_report_title)
 
     ext_map = {"markdown": "md", "json": "json", "csv": "csv", "html": "html"}
     ext = ext_map.get(report_format.lower(), "md")

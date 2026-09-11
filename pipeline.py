@@ -25,6 +25,7 @@ def main():
     parser.add_argument("--model", help="Specific LLM / AGY model name")
     parser.add_argument("--api-key", help="API key for Gemini, OpenAI, or Anthropic")
     parser.add_argument("-f", "--format", default="markdown", choices=["markdown", "json", "csv", "html"], help="Analysis report output format")
+    parser.add_argument("--dangerously-skip-permissions", action="store_true", help="Auto-approve permissions for AGY CLI")
 
     args = parser.parse_args()
 

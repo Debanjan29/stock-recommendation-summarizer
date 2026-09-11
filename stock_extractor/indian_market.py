@@ -18,12 +18,18 @@ COMMON_ENGLISH_WORDS: Set[str] = {
     "good", "nice", "fast", "time", "rate", "mind", "gain", "mark", "care",
     "true", "team", "gold", "next", "long", "hold", "look", "more", "high",
     "low", "line", "point", "plan", "core", "bond", "deal", "free", "view",
-    "for", "and", "the", "can", "out", "all", "new", "see", "day", "now"
+    "for", "and", "the", "can", "out", "all", "new", "see", "day", "now",
+    "all time", "all-time", "alltime", "all-time high", "all time high"
 }
 
 # Standard Spoken Aliases -> Official NSE Symbol
 SPOKEN_ALIASES: Dict[str, str] = {
     "reliance": "RELIANCE", "reliance industries": "RELIANCE", "ril": "RELIANCE",
+    "ptc industries": "PTCIL", "ptc industry": "PTCIL", "ptcil": "PTCIL",
+    "mtar": "MTARTECH", "mtar tech": "MTARTECH", "mtar technologies": "MTARTECH", "mpr technologies": "MTARTECH", "mtr technologies": "MTARTECH", "mtr technology": "MTARTECH",
+    "aequs": "AEQUS", "equus": "AEQUS", "aequs limited": "AEQUS",
+    "midhani": "MIDHANI", "mishra dhatu nigam": "MIDHANI", "mishra dhatu": "MIDHANI",
+    "unimech": "UNIMECH", "unimech aerospace": "UNIMECH", "unmak arrow": "UNIMECH", "yunc arrow": "UNIMECH",
     "tata motors": "TATAMOTORS", "tata motor": "TATAMOTORS", "tmpv": "TATAMOTORS",
     "tata steel": "TATASTEEL", "tcs": "TCS", "tata consultancy": "TCS",
     "tata power": "TATAPOWER", "tata tech": "TATATECH", "tata technologies": "TATATECH",

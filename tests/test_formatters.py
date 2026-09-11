@@ -63,5 +63,32 @@ class TestFormatters(unittest.TestCase):
         self.assertIn("Morgan Stanley", html_str)
         self.assertIn("badge-buy", html_str)
 
+    def test_hindi_sanitization_in_report(self):
+        rec = StockRecommendation(
+            ticker="RELIANCE",
+            action="BUY",
+            analyst="अनिल सिंघवी",
+            stop_loss="Rs 1400",
+            target="Rs 1600",
+            horizon="Long-term",
+            source_quote="रिलायंस में खरीदारी करें, बहुत मजबूत है।",
+            timestamp_seconds=100.0,
+            timestamp_formatted="01:40",
+            timestamp_url="https://youtu.be/test?t=100"
+        )
+        report = VideoReport(
+            video_id="test",
+            video_url="https://www.youtube.com/watch?v=test",
+            title="यहाँ रखें नजर!",
+            channel="सुमित मेहरोत्रा",
+            extraction_method="Test Engine",
+            recommendations=[rec]
+        )
+        md = format_markdown_report(report)
+        import re
+        self.assertFalse(bool(re.search(r'[\u0900-\u097F]', md)), "Report markdown must not contain pure Devanagari Hindi characters")
+        self.assertIn("RELIANCE", md)
+        self.assertIn("khareedaaree", md.lower())
+
 if __name__ == "__main__":
     unittest.main()

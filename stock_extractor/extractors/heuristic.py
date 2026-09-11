@@ -153,6 +153,10 @@ class HeuristicExtractor(BaseExtractor):
         # 1. Match known spoken aliases
         for alias, symbol in indian_market_manager.alias_map.items():
             if len(alias) >= 3 and re.search(r'\b' + re.escape(alias) + r'\b', text_lower):
+                if symbol == "RELIANCE":
+                    cleaned_text = re.sub(r'\bself[-\s]reliance\b', '', text_lower)
+                    if not re.search(r'\b' + re.escape(alias) + r'\b', cleaned_text):
+                        continue
                 found.append((symbol, alias))
 
         # 2. Match explicit stock tickers (must be in alias map or major database)

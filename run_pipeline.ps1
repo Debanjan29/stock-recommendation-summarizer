@@ -4,12 +4,24 @@
 # Step 2: Analyzes transcript with LLM / AGY Engine & saves 'DD-MM-YY - Title.md'
 # ==============================================================================
 
+[CmdletBinding()]
 param (
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, Position=0)]
     [string]$Url,
+    [Parameter(Position=1)]
     [string]$Method = "agy",
-    [string]$Format = "markdown"
+    [Parameter(Position=2)]
+    [string]$Format = "markdown",
+    [Alias("dangerously-skip-permissions")]
+    [switch]$DangerouslySkipPermissions,
+    [Parameter(ValueFromRemainingArguments=$true)]
+    [string[]]$RemainingArgs
 )
+
+# Sanitize method if a flag or switch was passed positionally
+if ($Method -like "-*") {
+    $Method = "agy"
+}
 
 # Auto-detect virtual environment Python
 $PythonCmd = "python"

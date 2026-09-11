@@ -14,7 +14,6 @@ from typing import List, Dict, Any, Optional
 from stock_extractor.models import StockRecommendation
 from stock_extractor.extractors.base import BaseExtractor
 from stock_extractor.extractors.llm_base import EXTRACTION_SYSTEM_PROMPT, parse_llm_response, parse_llm_markdown_table_response
-from stock_extractor.extractors.heuristic import HeuristicExtractor
 
 class AGYExtractor(BaseExtractor):
     """AGY AI CLI Extractor that captures and parses LLM responses directly from transcripts."""
@@ -53,6 +52,10 @@ class AGYExtractor(BaseExtractor):
                     with open(r_file, "r", encoding="utf-8", errors="ignore") as rf:
                         content = rf.read()
                         if video_id in content:
+                            from stock_extractor.transliteration import has_devanagari
+                            # Do not reuse old reports containing pure Devanagari Hindi
+                            if has_devanagari(content):
+                                continue
                             recs = parse_llm_markdown_table_response(content, video_id)
                             if recs and len(recs) >= 2:
                                 return recs
@@ -80,7 +83,7 @@ class AGYExtractor(BaseExtractor):
                     stdin=subprocess.DEVNULL,
                     capture_output=True, 
                     text=True, 
-                    timeout=15, 
+                    timeout=180, 
                     encoding="utf-8",
                     errors="replace"
                 )
@@ -88,8 +91,12 @@ class AGYExtractor(BaseExtractor):
                     recs = parse_llm_response(result.stdout, video_id)
                     if recs:
                         return recs
-            except Exception:
-                pass
+                elif result.returncode != 0:
+                    print(f"[AGY CLI] Warning: agy exited with code {result.returncode}. Stderr: {result.stderr.strip()[:200]}")
+            except subprocess.TimeoutExpired:
+                print(f"[AGY CLI] Warning: agy execution timed out after 180 seconds.")
+            except Exception as e:
+                print(f"[AGY CLI] Warning: agy execution failed: {e}")
 
         # -------------------------------------------------------------
         # Tier 3: Check for configured LLM REST APIs (Gemini, OpenAI, etc.)
@@ -117,8 +124,10 @@ class AGYExtractor(BaseExtractor):
                 pass
 
         # -------------------------------------------------------------
-        # Tier 4: Enhanced Heuristic Fallback (Strict entity validation)
+        # Strict Policy: "LLM or nothing"
         # -------------------------------------------------------------
-        heuristic = HeuristicExtractor()
-        return heuristic.extract(chunks, video_id)
+        raise RuntimeError(
+            f"LLM Extraction failed for video '{video_id}'. No active LLM provider (AGY AI CLI, Gemini, OpenAI, Claude, or Ollama) "
+            f"returned valid stock recommendations. Heuristic guessing is strictly disabled per project requirements ('LLM or nothing')."
+        )
 
