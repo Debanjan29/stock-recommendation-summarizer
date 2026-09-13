@@ -18,6 +18,7 @@ class TestFormatters(unittest.TestCase):
         rec = StockRecommendation(
             ticker="AAPL",
             action="BUY",
+            sector="Technology",
             analyst="Morgan Stanley",
             stop_loss="$150",
             target="$200",
@@ -40,7 +41,7 @@ class TestFormatters(unittest.TestCase):
         md = format_markdown_report(self.report)
         self.assertIn("# Stock Recommendations Report", md)
         self.assertIn("Top Stock Recommendations", md)
-        self.assertIn("| **AAPL** | `BUY` | Morgan Stanley | $150 | $200 |", md)
+        self.assertIn("| **AAPL** | `BUY` | Technology | Morgan Stanley | $150 | $200 |", md)
         self.assertIn("[04:12](https://youtu.be/dQw4w9WgXcQ?t=252)", md)
 
     def test_format_json(self):
@@ -49,17 +50,19 @@ class TestFormatters(unittest.TestCase):
         self.assertEqual(data["video_id"], "dQw4w9WgXcQ")
         self.assertEqual(data["total_recommendations"], 1)
         self.assertEqual(data["recommendations"][0]["ticker"], "AAPL")
+        self.assertEqual(data["recommendations"][0]["sector"], "Technology")
         self.assertEqual(data["recommendations"][0]["analyst"], "Morgan Stanley")
 
     def test_format_csv(self):
         csv_str = format_csv_report(self.report)
-        self.assertIn("ticker,action,analyst,stop_loss,target", csv_str)
-        self.assertIn("AAPL,BUY,Morgan Stanley,$150,$200", csv_str)
+        self.assertIn("ticker,action,sector,analyst,stop_loss,target", csv_str)
+        self.assertIn("AAPL,BUY,Technology,Morgan Stanley,$150,$200", csv_str)
 
     def test_format_html(self):
         html_str = format_html_report(self.report)
         self.assertIn("<!DOCTYPE html>", html_str)
         self.assertIn("AAPL", html_str)
+        self.assertIn("Technology", html_str)
         self.assertIn("Morgan Stanley", html_str)
         self.assertIn("badge-buy", html_str)
 

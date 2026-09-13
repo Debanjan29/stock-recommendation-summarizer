@@ -29,7 +29,7 @@ def get_extractor(
     elif method == "openai":
         return OpenAIExtractor(api_key=api_key, model=model or "gpt-4o-mini")
     elif method == "gemini":
-        return GeminiExtractor(api_key=api_key, model=model or "gemini-2.5-flash")
+        return GeminiExtractor(api_key=api_key, model=model or "gemini-3.6-flash")
     elif method == "anthropic":
         return AnthropicExtractor(api_key=api_key, model=model or "claude-3-5-sonnet-20241022")
     elif method == "ollama":

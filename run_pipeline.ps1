@@ -23,12 +23,10 @@ if ($Method -like "-*") {
     $Method = "agy"
 }
 
-# Auto-detect virtual environment Python
+# Auto-detect local virtual environment Python
 $PythonCmd = "python"
 if (Test-Path ".\.venv\Scripts\python.exe") {
     $PythonCmd = ".\.venv\Scripts\python.exe"
-} elseif (Test-Path "..\stock_rec\.venv\Scripts\python.exe") {
-    $PythonCmd = "..\stock_rec\.venv\Scripts\python.exe"
 } elseif ($env:VIRTUAL_ENV -and (Test-Path "$env:VIRTUAL_ENV\Scripts\python.exe")) {
     $PythonCmd = "$env:VIRTUAL_ENV\Scripts\python.exe"
 }

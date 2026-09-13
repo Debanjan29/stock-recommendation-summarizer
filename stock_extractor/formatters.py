@@ -37,6 +37,7 @@ def render_console_report(report: VideoReport) -> None:
     table = Table(title="Stock Recommendations", show_header=True, header_style="bold magenta")
     table.add_column("Ticker", style="bold cyan", no_wrap=True)
     table.add_column("Action", justify="center", no_wrap=True)
+    table.add_column("Sector", style="magenta")
     table.add_column("Analyst / Firm", style="yellow")
     table.add_column("Stop-Loss", style="red", no_wrap=True)
     table.add_column("Target", style="green")
@@ -59,10 +60,12 @@ def render_console_report(report: VideoReport) -> None:
             
         timestamp_display = f"[link={rec.timestamp_url}]{rec.timestamp_formatted}[/link]" if rec.timestamp_url else rec.timestamp_formatted
         safe_quote = ensure_no_pure_hindi(rec.source_quote)
+        sector_val = ensure_no_pure_hindi(getattr(rec, "sector", "Diversified / Other"))
         
         table.add_row(
             ensure_no_pure_hindi(rec.ticker),
             action_style,
+            sector_val,
             ensure_no_pure_hindi(rec.analyst),
             ensure_no_pure_hindi(rec.stop_loss),
             ensure_no_pure_hindi(rec.target),
@@ -89,15 +92,16 @@ def format_markdown_report(report: VideoReport) -> str:
         f"",
         f"## Summary Table",
         f"",
-        f"| Ticker | Action | Analyst / Firm | Stop-Loss | Target | Horizon | Timestamp | Source Quote |",
-        f"| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |"
+        f"| Ticker | Action | Sector | Analyst / Firm | Stop-Loss | Target | Horizon | Timestamp | Source Quote |",
+        f"| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |"
     ]
     
     for rec in report.recommendations:
         ts_link = f"[{rec.timestamp_formatted}]({rec.timestamp_url})" if rec.timestamp_url else rec.timestamp_formatted
         safe_quote = ensure_no_pure_hindi(rec.source_quote)
         quote_clean = safe_quote.replace("|", "\\|").replace("\n", " ")
-        lines.append(f"| **{ensure_no_pure_hindi(rec.ticker)}** | `{rec.action}` | {ensure_no_pure_hindi(rec.analyst)} | {ensure_no_pure_hindi(rec.stop_loss)} | {ensure_no_pure_hindi(rec.target)} | {ensure_no_pure_hindi(rec.horizon)} | {ts_link} | {quote_clean} |")
+        sector_val = ensure_no_pure_hindi(getattr(rec, "sector", "Diversified / Other"))
+        lines.append(f"| **{ensure_no_pure_hindi(rec.ticker)}** | `{rec.action}` | {sector_val} | {ensure_no_pure_hindi(rec.analyst)} | {ensure_no_pure_hindi(rec.stop_loss)} | {ensure_no_pure_hindi(rec.target)} | {ensure_no_pure_hindi(rec.horizon)} | {ts_link} | {quote_clean} |")
         
     lines.append("")
     lines.append("## Detailed Breakdown")
@@ -106,7 +110,9 @@ def format_markdown_report(report: VideoReport) -> str:
     for idx, rec in enumerate(report.recommendations, 1):
         ts_link = f"[{rec.timestamp_formatted}]({rec.timestamp_url})" if rec.timestamp_url else rec.timestamp_formatted
         safe_quote = ensure_no_pure_hindi(rec.source_quote)
+        sector_val = ensure_no_pure_hindi(getattr(rec, "sector", "Diversified / Other"))
         lines.append(f"### {idx}. {ensure_no_pure_hindi(rec.ticker)} - `{rec.action}`")
+        lines.append(f"- **Sector:** {sector_val}")
         lines.append(f"- **Analyst / Firm:** {ensure_no_pure_hindi(rec.analyst)}")
         lines.append(f"- **Stop-Loss:** {ensure_no_pure_hindi(rec.stop_loss)}")
         lines.append(f"- **Target Price:** {ensure_no_pure_hindi(rec.target)}")
@@ -129,13 +135,14 @@ def format_csv_report(report: VideoReport) -> str:
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow([
-        "ticker", "action", "analyst", "stop_loss", "target", "horizon", 
+        "ticker", "action", "sector", "analyst", "stop_loss", "target", "horizon", 
         "timestamp_formatted", "timestamp_seconds", "timestamp_url", "source_quote"
     ])
     
     for rec in report.recommendations:
+        sector_val = getattr(rec, "sector", "Diversified / Other")
         writer.writerow([
-            rec.ticker, rec.action, rec.analyst, rec.stop_loss, rec.target, rec.horizon,
+            rec.ticker, rec.action, sector_val, rec.analyst, rec.stop_loss, rec.target, rec.horizon,
             rec.timestamp_formatted, rec.timestamp_seconds, rec.timestamp_url, rec.source_quote
         ])
         
@@ -148,10 +155,12 @@ def format_html_report(report: VideoReport) -> str:
     for rec in report.recommendations:
         action_cls = "badge-buy" if "BUY" in rec.action.upper() else ("badge-sell" if "SELL" in rec.action.upper() else "badge-other")
         ts_html = f'<a href="{rec.timestamp_url}" target="_blank" class="timestamp-link">{rec.timestamp_formatted} 🔗</a>' if rec.timestamp_url else rec.timestamp_formatted
+        sector_val = getattr(rec, "sector", "Diversified / Other")
         rows_html.append(f"""
         <tr>
             <td class="ticker">{rec.ticker}</td>
             <td><span class="badge {action_cls}">{rec.action}</span></td>
+            <td><span class="badge badge-other">{sector_val}</span></td>
             <td>{rec.analyst}</td>
             <td>{rec.stop_loss}</td>
             <td>{rec.target}</td>
@@ -202,6 +211,7 @@ def format_html_report(report: VideoReport) -> str:
                 <tr>
                     <th>Ticker</th>
                     <th>Action</th>
+                    <th>Sector</th>
                     <th>Analyst / Firm</th>
                     <th>Stop-Loss</th>
                     <th>Target</th>

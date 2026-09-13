@@ -10,6 +10,7 @@ from stock_extractor.extractors.base import BaseExtractor
 from stock_extractor.utils import format_timestamp, make_timestamp_url
 from stock_extractor.indian_market import indian_market_manager
 from stock_extractor.transliteration import ensure_no_pure_hindi
+from stock_extractor.sectors import get_stock_sector
 
 EXTRACTION_SYSTEM_PROMPT = """You are an expert Indian financial market analyst assistant.
 Your task is to analyze YouTube video transcript snippets and extract EVERY stock recommendation or financial analysis mentioned ONLY for Indian Stock Market (NSE / BSE equities and Indian Indices like NIFTY 50, BANKNIFTY, SENSEX, RELIANCE, TATAMOTORS, HDFCBANK, SBIN, ZOMATO, etc.).
@@ -112,10 +113,12 @@ def parse_llm_json_response(
                 t_sec = float(item.get("timestamp_seconds", fallback_timestamp))
                 raw_analyst = str(item.get("analyst", item.get("firm", item.get("fund_house", "N/A")))).strip()
                 analyst = "N/A" if not raw_analyst or raw_analyst.upper() in ["NONE", "NULL", ""] else raw_analyst
-                
+                sector = get_stock_sector(ticker, raw_ticker)
+
                 rec = StockRecommendation(
                     ticker=ensure_no_pure_hindi(ticker),
                     action=ensure_no_pure_hindi(action),
+                    sector=ensure_no_pure_hindi(sector),
                     analyst=ensure_no_pure_hindi(analyst),
                     stop_loss=ensure_no_pure_hindi(str(item.get("stop_loss", "N/A")).strip()),
                     target=ensure_no_pure_hindi(str(item.get("target", "N/A")).strip()),
@@ -254,10 +257,12 @@ def parse_llm_markdown_table_response(
                 continue
 
             seen_tickers.add(ticker)
+            sector = get_stock_sector(ticker, raw_ticker)
 
             rec = StockRecommendation(
                 ticker=ensure_no_pure_hindi(ticker),
                 action=ensure_no_pure_hindi(action),
+                sector=ensure_no_pure_hindi(sector),
                 analyst=ensure_no_pure_hindi(analyst),
                 stop_loss=ensure_no_pure_hindi(stop_loss),
                 target=ensure_no_pure_hindi(target),

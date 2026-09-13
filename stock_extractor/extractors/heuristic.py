@@ -9,6 +9,7 @@ from stock_extractor.models import StockRecommendation
 from stock_extractor.extractors.base import BaseExtractor
 from stock_extractor.utils import format_timestamp, make_timestamp_url
 from stock_extractor.indian_market import indian_market_manager
+from stock_extractor.sectors import get_stock_sector
 
 class HeuristicExtractor(BaseExtractor):
     """Intelligent Heuristic Extractor prioritizing SL, Target, Horizon, and eliminating noise."""
@@ -129,6 +130,7 @@ class HeuristicExtractor(BaseExtractor):
                 rec = StockRecommendation(
                     ticker=ticker,
                     action=action,
+                    sector=get_stock_sector(ticker, company_name=company_alias),
                     analyst=analyst,
                     stop_loss=stop_loss,
                     target=target,

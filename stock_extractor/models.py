@@ -11,6 +11,7 @@ class StockRecommendation:
     """Represents a single stock recommendation extracted from video content."""
     ticker: str
     action: str  # BUY, SELL, HOLD, ACCUMULATE, AVOID, WATCH, TARGET ONLY
+    sector: str = "Diversified / Other"
     analyst: str = "N/A"  # Individual analyst (e.g. Varun, Lokesh Settia) or Fund House (e.g. Jefferies, JPM)
     stop_loss: str = "N/A"
     target: str = "N/A"
