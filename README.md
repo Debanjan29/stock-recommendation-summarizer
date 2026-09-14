@@ -81,7 +81,7 @@ uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 Visit **`http://localhost:8000`** in your browser.
 - Click the **"Quick Test"** badge below the search box (Money9 sample video) to test the complete extraction pipeline immediately!
 
-### 7. 📱 Running on Android (Termux)
+### 7. 🔥🔥 📱 Running on Android (Termux)   🔥🔥
 You can run the entire server directly on an Android smartphone using [Termux](https://termux.dev) with our lightweight, 100% pure-Python configuration (eliminates Rust, `pydantic-core`, `pandas`, and `lxml` build delays):
 
 ```bash
