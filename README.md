@@ -81,6 +81,24 @@ uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 Visit **`http://localhost:8000`** in your browser.
 - Click the **"Quick Test"** badge below the search box (Money9 sample video) to test the complete extraction pipeline immediately!
 
+### 7. 📱 Running on Android (Termux)
+You can run the entire server directly on an Android smartphone using [Termux](https://termux.dev) with our lightweight, 100% pure-Python configuration (eliminates Rust, `pydantic-core`, `pandas`, and `lxml` build delays):
+
+```bash
+# 1. Update Termux and install Python + Git
+pkg update -y && pkg install python git -y
+
+# 2. Clone repository & install Android requirements (~15 seconds)
+git clone https://github.com/Debanjan29/stock-recommendation-summarizer.git
+cd stock-recommendation-summarizer
+pip install -r requirements-android.txt
+
+# 3. Launch server on localhost:8000
+chmod +x run_android.sh
+./run_android.sh
+```
+Open `http://localhost:8000` in your phone's browser (Chrome, Brave, Firefox, etc.).
+
 ---
 
 ## 🚀 Key Features & Capabilities
@@ -192,7 +210,9 @@ python -m stock_extractor.cli pipeline "https://youtu.be/0Kekl5cBDSk" --output-d
 ```
 stock_recommendation_summarizer/
 ├── app.py                          # FastAPI application & REST/SSE endpoints
-├── requirements.txt                # Production Python dependencies
+├── requirements.txt                # Production Python dependencies (Desktop / Cloud)
+├── requirements-android.txt        # Ultra-lightweight dependencies (Android / Termux)
+├── run_android.sh                  # 1-click Termux launcher script
 ├── render.yaml                     # Render.com Blueprint deployment spec
 ├── .env.example                    # Sample environment variables template
 ├── README.md                       # Comprehensive documentation
@@ -267,6 +287,11 @@ Simply copy your PostgreSQL connection string and paste it into <code>DATABASE_U
 <details>
 <summary><b>4. What happens when a video has already been analyzed?</b></summary>
 The system checks the database first. If the video was analyzed previously, it retrieves the saved report and recommendations in under <b>100 milliseconds</b> without calling YouTube or the Gemini API again.
+</details>
+
+<details>
+<summary><b>5. Can I run this server directly on my Android phone?</b></summary>
+Yes! Use Termux with <code>pip install -r requirements-android.txt</code>. This uses our pure-Python mobile configuration that completely omits heavy C/Rust compilers (<code>pydantic-core</code>, <code>pandas</code>, <code>numpy</code>, <code>lxml</code>, <code>psycopg2</code>), allowing the server to install in ~15 seconds and run locally on <code>http://localhost:8000</code>.
 </details>
 
 ---
